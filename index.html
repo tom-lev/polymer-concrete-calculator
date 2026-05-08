@@ -2,32 +2,37 @@
 <html dir="rtl" lang="he">
 <head>
     <meta charset="UTF-8">
-    <title>מחשבון בטון פולימרי משודרג</title>
+    <title>מחשבון יציקה - גרסה מלאה</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #2980b9; --bg: #f4f7f6; }
+        :root { --primary: #2980b9; --bg: #f4f7f6; --accent: #27ae60; }
         body { font-family: system-ui, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); display: flex; justify-content: center; }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); width: 100%; max-width: 500px; }
         h2 { text-align: center; color: #333; margin-bottom: 20px; }
         
-        .section-title { font-weight: bold; margin: 15px 0 10px; display: block; color: #555; }
+        .section-title { font-weight: bold; margin: 15px 0 10px; display: block; color: #555; font-size: 14px; }
         
-        /* עיצוב כפתורי בחירה מהירה */
+        /* כפתורי אבקה */
         .grid-select { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .chip { padding: 12px; border: 2px solid #eaeeef; border-radius: 12px; text-align: center; cursor: pointer; background: #fff; transition: 0.2s; font-size: 14px; }
         .chip.active { border-color: var(--primary); background: #eef7ff; color: var(--primary); font-weight: bold; }
         
-        /* שדה הזנה ידנית */
-        .manual-input { width: 100%; padding: 15px; border: 2px solid #eaeeef; border-radius: 12px; font-size: 18px; box-sizing: border-box; text-align: center; margin-bottom: 10px; }
-        .manual-input:focus { border-color: var(--primary); outline: none; background: #fff; }
+        /* תצוגת תמונה */
+        .mold-preview { width: 100%; height: 200px; border-radius: 15px; background-color: #f0f0f0; margin-bottom: 10px; background-size: contain; background-repeat: no-repeat; background-position: center; display: none; border: 1px solid #ddd; }
+
+        /* כפתור רכישה */
+        #buyBtn { display: none; width: 100%; padding: 10px; background-color: var(--accent); color: white; text-decoration: none; text-align: center; border-radius: 10px; margin-bottom: 15px; font-weight: bold; font-size: 14px; transition: opacity 0.2s; }
+        #buyBtn:hover { opacity: 0.9; }
+
+        /* קלט וחישוב */
+        .manual-input { width: 100%; padding: 15px; border: 2px solid #eaeeef; border-radius: 12px; font-size: 18px; box-sizing: border-box; text-align: center; margin-bottom: 10px; background: #fff; }
 
         .result-box { margin-top: 25px; padding: 20px; background: #2c3e50; color: white; border-radius: 15px; text-align: center; }
         .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
-        .res-label { font-size: 14px; opacity: 0.8; }
-        .res-val { font-size: 24px; font-weight: bold; display: block; }
+        .res-val { font-size: 26px; font-weight: bold; display: block; color: #3498db; }
         
+        select { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #eee; margin-bottom: 15px; font-size: 16px; background: #fff; }
         .loading { text-align: center; color: #999; padding: 30px; }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -35,26 +40,31 @@
 <div class="card">
     <h2>מחשבון יציקה</h2>
     
-    <div id="loader" class="loading">טוען נתונים...</div>
+    <div id="loader" class="loading">מתחבר לנתונים...</div>
 
-    <div id="mainContent" class="hidden">
-        <span class="section-title">1. בחירת אבקה:</span>
+    <div id="mainContent" style="display: none;">
+        <span class="section-title">1. בחר אבקה:</span>
         <div id="materialChips" class="grid-select"></div>
 
-        <span class="section-title">2. בחירת תבנית מהרשימה:</span>
-        <select id="moldSelect" style="width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #eee; margin-bottom: 15px;"></select>
+        <span class="section-title">2. בחר תבנית:</span>
+        <div id="moldImg" class="mold-preview"></div>
+        
+        <!-- כפתור רכישה שיופיע רק אם יש לינק -->
+        <a id="buyBtn" target="_blank">לינק לתבנית</a>
+        
+        <select id="moldSelect"></select>
 
-        <span class="section-title">או הזנת נפח מים ידנית (גרם):</span>
-        <input type="number" id="manualVolume" class="manual-input" placeholder="הכנס משקל מים בתבנית..." inputmode="decimal">
+        <span class="section-title">נפח מים בגרם:</span>
+        <input type="number" id="manualVolume" class="manual-input" placeholder="0" inputmode="decimal">
 
-        <div id="resultArea" class="result-box">
+        <div class="result-box">
             <div class="result-grid">
                 <div>
-                    <span class="res-label">מים</span>
+                    <span style="font-size: 13px; opacity: 0.8;">מים (גרם)</span>
                     <span id="waterVal" class="res-val">0.00</span>
                 </div>
                 <div>
-                    <span class="res-label">אבקה</span>
+                    <span style="font-size: 13px; opacity: 0.8;">אבקה (גרם)</span>
                     <span id="powderVal" class="res-val">0.00</span>
                 </div>
             </div>
@@ -76,15 +86,22 @@
             const textMolds = await resMolds.text();
             const textMats = await resMats.text();
 
-            molds = parseCSV(textMolds).map(row => ({ name: row[0], volume: parseFloat(row[1]) }))
-                    .filter(item => item.name && !isNaN(item.volume));
+            molds = parseCSV(textMolds).map(row => ({ 
+                name: row[0], 
+                volume: parseFloat(row[1]),
+                img: row[2] || "",
+                link: row[3] || "" // עמודה רביעית - לינק לרכישה
+            })).filter(item => item.name && !isNaN(item.volume));
             
-            materials = parseCSV(textMats).map(row => ({ name: row[0], wRatio: parseFloat(row[1]), pRatio: parseFloat(row[2]) }))
-                        .filter(item => item.name && !isNaN(item.wRatio));
+            materials = parseCSV(textMats).map(row => ({ 
+                name: row[0], 
+                wRatio: parseFloat(row[1]), 
+                pRatio: parseFloat(row[2]) 
+            })).filter(item => item.name && !isNaN(item.wRatio));
 
             initApp();
         } catch (err) {
-            document.getElementById('loader').innerText = "שגיאה בטעינה";
+            document.getElementById('loader').innerText = "שגיאה בטעינת נתונים.";
         }
     }
 
@@ -93,10 +110,9 @@
     }
 
     function initApp() {
-        document.getElementById('loader').classList.add('hidden');
-        document.getElementById('mainContent').classList.remove('hidden');
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
 
-        // יצירת כפתורי אבקה
         const chipsContainer = document.getElementById('materialChips');
         materials.forEach((mat, index) => {
             const chip = document.createElement('div');
@@ -112,26 +128,48 @@
             chipsContainer.appendChild(chip);
         });
 
-        // מילוי תפריט תבניות
         const mSelect = document.getElementById('moldSelect');
         molds.sort((a, b) => a.name.localeCompare(b.name, 'he'));
-        mSelect.innerHTML = '<option value="">-- בחר תבנית קיימת --</option>' + 
-                          molds.map(m => `<option value="${m.volume}">${m.name} (${m.volume}g)</option>`).join('');
+        
+        mSelect.innerHTML = '<option value="" data-img="" data-link="">-- בחר תבנית --</option>' + 
+                          molds.map(m => `<option value="${m.volume}" data-img="${m.img}" data-link="${m.link}">${m.name}</option>`).join('');
 
-        // האזנה לשינויים
         mSelect.onchange = () => {
-            if(mSelect.value) document.getElementById('manualVolume').value = mSelect.value;
-            calculate();
-        };
-        document.getElementById('manualVolume').oninput = calculate;
+            const selectedOption = mSelect.options[mSelect.selectedIndex];
+            const imgUrl = selectedOption.getAttribute('data-img');
+            const buyLink = selectedOption.getAttribute('data-link');
+            
+            const preview = document.getElementById('moldImg');
+            const buyBtn = document.getElementById('buyBtn');
+            
+            // הצגת תמונה
+            if(imgUrl && imgUrl.length > 5) {
+                preview.style.backgroundImage = `url('${imgUrl}')`;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
 
+            // הצגת כפתור רכישה
+            if(buyLink && buyLink.length > 5) {
+                buyBtn.href = buyLink;
+                buyBtn.style.display = 'block';
+            } else {
+                buyBtn.style.display = 'none';
+            }
+
+            if(mSelect.value) {
+                document.getElementById('manualVolume').value = mSelect.value;
+                calculate();
+            }
+        };
+
+        document.getElementById('manualVolume').oninput = calculate;
         calculate();
     }
 
     function calculate() {
-        const manualVal = parseFloat(document.getElementById('manualVolume').value);
-        const volume = manualVal || 0;
-        
+        const volume = parseFloat(document.getElementById('manualVolume').value) || 0;
         if (selectedMaterial && volume > 0) {
             document.getElementById('waterVal').innerText = (volume * selectedMaterial.wRatio).toFixed(2);
             document.getElementById('powderVal').innerText = (volume * selectedMaterial.pRatio).toFixed(2);
