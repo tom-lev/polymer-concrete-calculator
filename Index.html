@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>מחשבון בטון פולימרי</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; text-align: right; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
+        select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; appearance: none; background: white; cursor: pointer; }
+        select:focus { border-color: #1a73e8; outline: none; }
+        .result-box { margin-top: 25px; padding: 20px; background: #e8f0fe; border-radius: 10px; display: none; border: 1px solid #c2d7fa; }
+        .result-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 18px; }
+        .result-item span:last-child { font-weight: bold; color: #1a73e8; }
+        .loading { text-align: center; color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>מחשבון בטון פולימרי</h2>
+    
+    <div id="loader" class="loading">טוען נתונים מהגיליון...</div>
+
+    <div id="mainContent" style="display: none;">
+        <div class="form-group">
+            <label for="moldSelect">בחר תבנית:</label>
+            <select id="moldSelect"></select>
+        </div>
+
+        <div class="form-group">
+            <label for="materialSelect">בחר סוג אבקה:</label>
+            <select id="materialSelect"></select>
+        </div>
+
+        <div id="resultArea" class="result-box">
+            <div class="result-item">
+                <span>כמות מים:</span>
+                <span id="waterVal">0</span>
+            </div>
+            <div class="result-item" style="border-top: 1px solid #c2d7fa; pt-10; margin-top: 10px; padding-top: 10px;">
+                <span>כמות אבקה:</span>
+                <span id="powderVal">0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- הוראות להחלפת הקישורים ---
+    // 1. בגיליון שלך, לך ל-File > Share > Publish to web
+    // 2. בחר בלשונית "תבניות" ובפורמט "CSV", העתק את הקישור ל-moldsURL
+    // 3. בחר בלשונית "אבקות" ובפורמט "CSV", העתק את הקישור ל-materialsURL
+    
+    const moldsURL = "הקישור_של_לשונית_תבניות_כאן";
+    const materialsURL = "הקישור_של_לשונית_אבקות_כאן";
+
+    let molds = [];
+    let materials = [];
+
+    async function init() {
+        try {
+            // טעינת תבניות
+            const resMolds = await fetch(moldsURL);
+            const textMolds = await resMolds.text();
+            molds = parseCSV(textMolds).map(row => ({
+                name: row[0],
+                volume: parseFloat(row[1])
+            })).filter(item => !isNaN(item.volume));
+
+            // טעינת אבקות
+            const resMats = await fetch(materialsURL);
+            const textMats = await resMats.text();
+            materials = parseCSV(textMats).map(row => ({
+                name: row[0],
+                wRatio: parseFloat(row[1]),
+                pRatio: parseFloat(row[2])
+            })).filter(item => !isNaN(item.wRatio));
+
+            render();
+        } catch (err) {
+            document.getElementById('loader').innerText = "שגיאה בטעינת הנתונים. וודא שהגיליון פורסם כ-CSV.";
+            console.error(err);
+        }
+    }
+
+    function parseCSV(text) {
+        // פונקציה פשוטה לפירוק CSV תוך התעלמות משורת הכותרת
+        return text.split('\n').slice(1).map(row => row.split(',').map(cell => cell.trim()));
+    }
+
+    function render() {
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+
+        const moldSelect = document.getElementById('moldSelect');
+        // מיון אלפביתי של התבניות
+        molds.sort((a, b) => a.name.localeCompare(b.name));
+        moldSelect.innerHTML = molds.map(m => `<option value="${m.volume}">${m.name}</option>`).join('');
+
+        const matSelect = document.getElementById('materialSelect');
+        matSelect.innerHTML = materials.map(m => `<option value="${m.wRatio}|${m.pRatio}">${m.name}</option>`).join('');
+
+        [moldSelect, matSelect].forEach(el => el.addEventListener('change', calculate));
+        calculate();
+    }
+
+    function calculate() {
+        const volume = parseFloat(document.getElementById('moldSelect').value);
+        const [wRatio, pRatio] = document.getElementById('materialSelect').value.split('|').map(parseFloat);
+
+        if (volume && wRatio && pRatio) {
+            document.getElementById('waterVal').innerText = (volume * wRatio).toFixed(1) + " גרם";
+            document.getElementById('powderVal').innerText = (volume * pRatio).toFixed(1) + " גרם";
+            document.getElementById('resultArea').style.display = 'block';
+        }
+    }
+
+    init();
+</script>
+
+</body>
+</html>
