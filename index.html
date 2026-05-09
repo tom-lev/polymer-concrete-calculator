@@ -2,7 +2,7 @@
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
-  <title>מחשבון יציקה</title>
+  <title>קטלוג תבניות</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -27,10 +27,10 @@
       --shadow-primary: 0 4px 16px rgba(41,128,185,0.25);
       --r-sm: 12px; --r-md: 16px; --r-lg: 20px; --r-xl: 24px;
     }
-    body { font-family: 'Heebo', system-ui, sans-serif; background: var(--bg); color: var(--text-h); min-height: 100vh; padding: 0 0 80px; direction: rtl; }
+    body { font-family: 'Heebo', system-ui, sans-serif; background: var(--bg); color: var(--text-h); min-height: 100vh; padding: 0 0 calc(70px + env(safe-area-inset-bottom, 0px)); direction: rtl; }
 
     /* Bottom nav */
-    .bottom-nav { position: fixed; bottom: 0; right: 0; left: 0; background: var(--card); border-top: 1px solid var(--border-soft); display: flex; z-index: 50; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); }
+    .bottom-nav { position: fixed; bottom: 0; right: 0; left: 0; background: var(--card); border-top: 1px solid var(--border-soft); display: flex; z-index: 50; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); padding-bottom: env(safe-area-inset-bottom, 0px); }
     .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0 12px; text-decoration: none; color: var(--text-dim); font-size: 10px; font-weight: 500; gap: 4px; transition: color 0.15s; font-family: inherit; }
     .bottom-nav-item i { font-size: 22px; }
     .bottom-nav-item.active { color: var(--primary); }
@@ -176,7 +176,7 @@
 <div class="app">
   <div class="header">
     <div class="header-icon">🏺</div>
-    <h1>מחשבון יציקה</h1>
+    <h1>קטלוג תבניות</h1>
     <p>חשב יחסי אבקה ומים לתבנית שלך</p>
   </div>
 
